@@ -1,17 +1,15 @@
 /*
-Projet EDHess par Malo DOUAIRET
+Projet EDHess par Malo DOUAIRET : e2100408
 Virtualisation d'un reseau electrique entre une/des source(s) et un/des consommateur(s)
 Version 1.0 : 25/10/22
 Dans cette version, l'IHM est le plus haut niveau que je puisse developper avec les cours
 Et aussi en utilisant un peu internet
-Internet utile uniquement pour : sprintf(), et la methode curseur (juste l'idee de treeees loin)
+Internet utile uniquement pour : sprintf(), atoi(), et la methode curseur (juste l'idee de treeees loin)
 */
-
 #include<stdio.h>
 #include<stdlib.h>
 #include<windows.h>
 #include<string.h>
-
 /*
 On definit les parametres lies a la presentation graphique du programme
 HD = Haut Droit
@@ -56,7 +54,7 @@ typedef struct centrale{
 	int puissanceMax;
 	// Pointeur sur la liste des lignes
 	PTligneElectrique villeDependante;
-	// Liste doublement chain�e 
+	// Liste doublement chainee
 	struct centrale * ptsuivant;
 	struct centrale * ptprecedent;
 }Tcentrale;
@@ -127,6 +125,9 @@ void cadre(int x, int y, int haut, int larg){
 }
 
 void effacerLigne(int x, int y, int taille){
+	/*
+	Efface Taille caracteres vers la gauche via la position x,y
+	*/
 	gotoLigCol(x,y);
 	while(taille>0){
 		printf(" ");
@@ -135,6 +136,9 @@ void effacerLigne(int x, int y, int taille){
 }
 
 void afficherCurseur(Tcurseur cursor){
+	/*
+	Affiche en fond blanc, lettres noires, une chaine de caracteres
+	*/
 	if(cursor.x != -1){
 		gotoLigCol(cursor.x, cursor.y);
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -157,6 +161,10 @@ int lireCaract(){
 }
 
 void effacerMenuFonctions(){
+	/*
+	Efface le contenu du cadre des Fonctions
+	Repetition selon l'axe x de la fonction effacerLigne
+	*/
 	int taille=8-1;
 	while(taille > 0){
 		effacerLigne(HD_Fonctions_x+taille,HD_Fonctions_y+1,longueur_Fonctions);
@@ -165,6 +173,9 @@ void effacerMenuFonctions(){
 }
 
 void effacerCadreCentrales(PTcentrale pdebutC){
+	/*
+	De la meme facon, efface le cadre des centrales 
+	*/
 	int taille=longueurListeCentrale(pdebutC)+1;
 	while(taille>0){
 		effacerLigne(HD_Centrales_x+taille,HD_Centrales_y+1,longueur_Centrales);
@@ -172,7 +183,23 @@ void effacerCadreCentrales(PTcentrale pdebutC){
 	}
 }
 
+void cadreCentrale(PTcentrale pdebutC){
+	/*
+	Affiche aux positions definies le cadre des centrales
+	Avec le titre dans le cadre
+	*/
+	int taille=longueurListeCentrale(pdebutC);
+	cadre(HD_Centrales_x,HD_Centrales_y,taille+2,longueur_Centrales);
+	gotoLigCol(HD_Centrales_x,HD_Centrales_y+2);
+	printf("Liste des centrales :");
+	gotoLigCol(HD_Centrales_x+1,HD_Centrales_y+2);
+}
+
 void afficherPuissanceAlloueeDesCentrales(PTcentrale pdebutC){
+	/*
+	Remplace les centrales avec leurs puissance maximale
+	par les centrales et la puissance allouee
+	*/
 	PTcentrale px=pdebutC->ptsuivant;
 	int ligneX=2;
 	cadreCentrale(pdebutC);
@@ -186,16 +213,23 @@ void afficherPuissanceAlloueeDesCentrales(PTcentrale pdebutC){
 }
 
 void afficherPuissanceRestante(PTcentrale pdebutC){
+	/*
+	Remplace le texte dans le cadre des centrales
+	par les centrales avec la puissance restante
+	*/
 	PTcentrale px=pdebutC->ptsuivant;
-	int ligneX=2;
+	int ligneX=2, sommePuissance=0;
 	cadreCentrale(pdebutC);
 	printf("Code Centrale | P restante");
 	while(px->ptsuivant != NULL){
 		gotoLigCol(HD_Centrales_x+ligneX, HD_Centrales_y+3);
 		printf("%12d | %12d", px->codeCentrale, puissanceRestante(px));
+		sommePuissance = sommePuissance + puissanceRestante(px);
 		ligneX++;
 		px = px->ptsuivant;
 	}
+	gotoLigCol(HD_Inputs_x+4,HD_Inputs_y+1);
+	printf("Puissance restante max : %5d", sommePuissance);
 }
 		
 void menuFonctionsCentrales(){
@@ -227,15 +261,33 @@ void menuFonctionsVilles(){
 }
 
 void cadreInputs(){
+	/*
+	Realise le cadre des entrees
+	*/
 	cadre(HD_Inputs_x, HD_Inputs_y, 5, longueur_Fonctions);
 	gotoLigCol(HD_Inputs_x, HD_Inputs_y+2);
 	printf("Inputs :");
+}
+
+void effacerCadreInputs(){
+	/*
+	Efface le cadre interieur des entrees
+	*/
+	int l=4;
+	while(l>0){
+		effacerLigne(HD_Inputs_x+l,HD_Inputs_y+1,longueur_Fonctions);
+		l--;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////
 ///////////// INITIALISATIONS & FONCTIONS UTILES //////////////////
 
 int countCharDansString(char *line, char searched){
+	/*
+	Retourne les occurences d'un caractere dans une 
+	chaine de caracteres
+	*/
 	int somme=0, i;
 	for(i=0; i<strlen(line); i++){
 		if(line[i] == searched) somme++;
@@ -244,6 +296,9 @@ int countCharDansString(char *line, char searched){
 }
 
 PTcentrale initCentrales(){
+	/*
+	Initialise la liste doublement chainee des centrales
+	*/
 	PTcentrale pdebut, pfin;
 	
 	pdebut = (PTcentrale)malloc(sizeof(Tcentrale));	
@@ -257,6 +312,9 @@ PTcentrale initCentrales(){
 }
 
 PTville initVilles(){
+	/*
+	Initialise la liste simplement chainee des villes
+	*/
 	PTville pdebut, pfin;
 	
 	pdebut = (PTville)malloc(sizeof(Tville));	
@@ -268,6 +326,10 @@ PTville initVilles(){
 }
 
 PTligneElectrique initLigne(){
+	/*
+	Initialise une liste simplement chainee pour 
+	les lignes electriques
+	*/
 	PTligneElectrique pdebut, pfin;
 	
 	pdebut = (PTligneElectrique)malloc(sizeof(TlignesElectrique));	
@@ -298,6 +360,10 @@ void afficheMenu(){
 }
 
 void cursInput(){
+	/*
+	C'est juste plus agreable de faire appel a cette fonction
+	Place notre curseur dans le cadre des entrees (inputs)
+	*/
 	gotoLigCol(HD_Inputs_x+1, HD_Inputs_y+1);
 }
 
@@ -305,10 +371,17 @@ void cursInput(){
 ///////////// SOUS-PROGRAMMES LIGNES //////////////////////////////
 
 int nombreDeLignes(PTcentrale pdebutC){
+	/*
+	Retourne le nombre de lignes electriques
+	presentes dans toutes les centrales
+	(dans le but de pouvoir determiner la taille du cadre des lignes par exemple)
+	*/
 	PTcentrale px=pdebutC->ptsuivant;
 	PTligneElectrique pl;
 	int somme=0;
 	while(px->ptsuivant != NULL){
+		// On ne prends pas en compte les balises des listes en compte
+		//SUPPRIMER LE IF
 		if(px->villeDependante != NULL && px->villeDependante->ligneSuivante != NULL){
 			pl = px->villeDependante;
 			while(pl->ligneSuivante->ligneSuivante != NULL){
@@ -322,6 +395,10 @@ int nombreDeLignes(PTcentrale pdebutC){
 }
 
 void cadreLignes(PTcentrale pdebutC){
+	/*
+	Affiche le cadre des lignes avec le nom de 
+	chaque colonne
+	*/
 	int taille=nombreDeLignes(pdebutC);
 	cadre(HD_Lignes_x, HD_Lignes_y,taille+2,longueur_Lignes);
 	gotoLigCol(HD_Lignes_x,HD_Lignes_y+2);
@@ -332,6 +409,10 @@ void cadreLignes(PTcentrale pdebutC){
 }
 
 void insertionLigne(PTligneElectrique px, int puissance, PTville Pville){
+	/*
+	Insertion d'une ligne electrique dans la liste associee a une 
+	certaine centrale
+	*/
 	PTligneElectrique py=px->ligneSuivante;
 	px->ligneSuivante = (PTligneElectrique)malloc(sizeof(TlignesElectrique));
 	px->ligneSuivante->ligneSuivante = py;
@@ -341,6 +422,12 @@ void insertionLigne(PTligneElectrique px, int puissance, PTville Pville){
 }
 
 void ajouterLigne(PTcentrale Pcentrale, int puissance, PTville Pville){
+	/*
+	Ajoute une ligne electrique en trouvant la bonne position d'insertion
+	Initialise la liste si besoin
+	Conditions : 
+		- Si puissance Ligne > puissance Restante alors ANNULATION et EXPLICATIONS
+	*/
 	PTligneElectrique pxLigne;
 	
 	if(Pcentrale->villeDependante == NULL){	// Si y'a pas de lignes sur la centrale
@@ -358,6 +445,11 @@ void ajouterLigne(PTcentrale Pcentrale, int puissance, PTville Pville){
 }
 
 void supprimerLigne(PTcentrale pCentrale, PTville pVille){
+	/*
+	Supprime une ligne de la liste associee 
+	Conditions :
+		- Supprime rien si il n'y a aucune ligne associee a la centrale
+	*/
 	PTligneElectrique pl;
 	if(pCentrale->villeDependante != NULL && pCentrale->villeDependante->ligneSuivante != NULL){
 		pl = pCentrale->villeDependante;
@@ -377,6 +469,10 @@ void supprimerLigne(PTcentrale pCentrale, PTville pVille){
 }
 
 void afficherLignes(PTcentrale pdebutC){
+	/*
+	Affiche les lignes dans le cadre sous la forme :
+		CENTRALE | VILLE | PUISSANCE
+	*/
 	PTcentrale px=pdebutC->ptsuivant;
 	PTligneElectrique pl;
 	int ligneX=HD_Lignes_x+2;
@@ -399,15 +495,10 @@ void afficherLignes(PTcentrale pdebutC){
 ///////////////////////////////////////////////////////////////////
 ////////////// SOUS-PROGRAMMES CENTRALES //////////////////////////
 
-void cadreCentrale(PTcentrale pdebutC){
-	int taille=longueurListeCentrale(pdebutC);
-	cadre(HD_Centrales_x,HD_Centrales_y,taille+2,longueur_Centrales);
-	gotoLigCol(HD_Centrales_x,HD_Centrales_y+2);
-	printf("Liste des centrales :");
-	gotoLigCol(HD_Centrales_x+1,HD_Centrales_y+2);
-}
-
 void insertionCentrale(PTcentrale px, int code, int puissance){
+	/*
+	Insertion centrale dans la liste doublement chainee
+	*/
 	px->ptsuivant->ptprecedent = (PTcentrale)malloc(sizeof(Tcentrale));
 	px->ptsuivant->ptprecedent->ptsuivant = px->ptsuivant;
 	px->ptsuivant->ptprecedent->ptprecedent = px;
@@ -419,6 +510,10 @@ void insertionCentrale(PTcentrale px, int code, int puissance){
 }
 
 void ajouterCentrale(PTcentrale pdebutC, int codeCentrale, int pMax){
+	/*
+	Ajouter une centrale dans la liste en donnant la position 
+	puis en faisant appel a insertionCentrale
+	*/
 	PTcentrale px;
 
 	px = pdebutC;
@@ -427,6 +522,9 @@ void ajouterCentrale(PTcentrale pdebutC, int codeCentrale, int pMax){
 }
 
 void supprimerCentrale(PTcentrale pdebutC, PTcentrale pCentraleRemove){
+	/*
+	Supprime une centrale de la liste doublement chainee
+	*/
 	PTcentrale px=pdebutC;
 	while(px->ptsuivant != pCentraleRemove){px=px->ptsuivant;}
 	px->ptsuivant = px->ptsuivant->ptsuivant;
@@ -434,10 +532,17 @@ void supprimerCentrale(PTcentrale pdebutC, PTcentrale pCentraleRemove){
 }
 
 void modifierPuissance(PTcentrale px, int nouvellePuissance){
+	/*
+	Modifie la valeur de la puissance maximale d'une centrale
+	*/
 	px->puissanceMax = nouvellePuissance;
 }
 
 int puissanceConsommee(PTcentrale pCentrale){
+	/*
+	Retourne la puissance consommee d'une centrale
+	en sommant les puissances de chaque lignes
+	*/
 	if(pCentrale->villeDependante == NULL) return 0;
 	PTligneElectrique pxL=pCentrale->villeDependante->ligneSuivante;
 	unsigned int somme=0;
@@ -449,10 +554,17 @@ int puissanceConsommee(PTcentrale pCentrale){
 }
 
 int puissanceRestante(PTcentrale pCentrale){
+	/*
+	Retourne la puissance restante d'une centrale 
+	En prenant la puissance max - la puissance consommee
+	*/
 	return pCentrale->puissanceMax-puissanceConsommee(pCentrale);
 }
 
 int longueurListeCentrale(PTcentrale pdebut){
+	/*
+	Retourne le nombre de centrales 
+	*/
 	PTcentrale px=pdebut->ptsuivant;
 	int longueur=0;
 	while(px->ptsuivant != NULL){longueur++; px = px->ptsuivant;}
@@ -460,6 +572,10 @@ int longueurListeCentrale(PTcentrale pdebut){
 }
 
 void afficheCentrale(PTcentrale pdebutC){
+	/*
+	Affiche les centrales dans le cadre prevu pour
+		CODE CENTRALE | PUISSANCE MAX
+	*/
 	PTcentrale px=pdebutC->ptsuivant;
 	int ligneX=2;
 	cadreCentrale(pdebutC);
@@ -473,6 +589,10 @@ void afficheCentrale(PTcentrale pdebutC){
 }
 
 PTcentrale centraleViaCode(PTcentrale pdebut, int code){
+	/*
+	Retourne le pointeur de la centrale dont le codeCentrale
+	Correspond avec le parametre code
+	*/
 	PTcentrale px=pdebut;
 	while(px->ptsuivant->codeCentrale != code) px = px->ptsuivant;
 	return px->ptsuivant;
@@ -482,6 +602,9 @@ PTcentrale centraleViaCode(PTcentrale pdebut, int code){
 ///////////// SOUS-PROGRAMMES VILLES //////////////////////////////
 
 void insertionVille(PTville px, int codePostal){
+	/*
+	Insertion d'une ville dans la liste simplement chainee
+	*/
 	PTville py=px->villeSuivante;
 	px->villeSuivante = (PTville)malloc(sizeof(Tville));
 	px->villeSuivante->villeSuivante = py;
@@ -490,6 +613,11 @@ void insertionVille(PTville px, int codePostal){
 }
 
 void ajouterVille(PTville pdebutV, int codePostal){
+	/*
+	Ajoute une ville a la liste
+	en donnant la position anterieur
+	(on ajoute la ville a la fin de la liste)
+	*/
 	PTville px;
 	
 	px = pdebutV;
@@ -498,18 +626,27 @@ void ajouterVille(PTville pdebutV, int codePostal){
 }
 
 void supprimerVille(PTville pdebutV, PTville pVilleRemove){
+	/*
+	Supprime la ville de la liste via son pointeur
+	*/
 	PTville px=pdebutV;
 	while(px->villeSuivante != pVilleRemove){px = px->villeSuivante;}
 	px->villeSuivante = px->villeSuivante->villeSuivante;
 }
 
 PTville villePrecedente(PTville pdebutV, PTville px){
+	/*
+	Retourne la ville Precedente d'une certaine ville px
+	*/
 	PTville py=pdebutV;
 	while(py->villeSuivante != px)py = py->villeSuivante;
 	return py;
 }
 
 int longueurListeVille(PTville pdebut){
+	/*
+	Retourne le nombre de villes presentes dans la liste 
+	*/
 	PTville px=pdebut->villeSuivante;
 	int longueur=0;
 	while(px->villeSuivante != NULL){longueur++; px = px->villeSuivante;}
@@ -517,6 +654,10 @@ int longueurListeVille(PTville pdebut){
 }
 
 void afficheVille(PTville pdebutV){
+	/*
+	Affiche les villes dans le cadre prevu
+		CODE POSTAL
+	*/
 	PTville px=pdebutV->villeSuivante;
 	int ligneX=2, taille;
 	taille = longueurListeVille(pdebutV);
@@ -534,6 +675,9 @@ void afficheVille(PTville pdebutV){
 }
 
 PTville villeViaCode(PTville pdebutV, int code){
+	/*
+	Retourne le pointeur de la ville via son codePostal
+	*/
 	PTville px=pdebutV;
 	while(px->villeSuivante->codePostal != code) px = px->villeSuivante;
 	return px->villeSuivante;
@@ -559,6 +703,12 @@ void affichagePrincipal(PTcentrale pdebutC, PTville pdebutV, Tcurseur curs){
 }
 
 PTcentrale selectionnerCentrale(PTcentrale pdebutC, PTville pdebutV, Tcurseur cursor){
+	/*
+	Dans la liste des centrales, on fait un curseur de liste : CodeCentrale fond blanc, ecriture noire
+	qui se deplace entre la premiere centrale et la derniere
+	Et lorsque la touche ENTREE est enfoncee, retourne le pointeur centrale
+	associe au codeCentrale du curseur
+	*/
 	PTcentrale px=pdebutC->ptsuivant;
 	int c=0;
 	char acc[20];
@@ -599,6 +749,12 @@ PTcentrale selectionnerCentrale(PTcentrale pdebutC, PTville pdebutV, Tcurseur cu
 }
 
 PTville selectionnerVille(PTcentrale pdebutC, PTville pdebutV, Tcurseur cursor){
+	/*
+	Dans la liste des villes, on fait un curseur de liste : CodePostal fond blanc, ecriture noire
+	qui se deplace entre la premiere ville et la derniere
+	Et lorsque la touche ENTREE est enfoncee, retourne le pointeur ville
+	associe au codePostal du curseur
+	*/
 	PTville px=pdebutV->villeSuivante, py;
 	int c=0;
 	char acc[20];
@@ -638,7 +794,7 @@ PTville selectionnerVille(PTcentrale pdebutC, PTville pdebutV, Tcurseur cursor){
 	else return NULL;
 }
 
-int main(){	
+int main(){
 	//// Initialisation ////
 	FILE *f;
 	PTcentrale pdebutC=NULL, pxC;
@@ -646,6 +802,7 @@ int main(){
 	PTville pdebutV=NULL, pxV;
 	int puissance, code, code1, longueur, choix=0;
 	int menuAllouee=0, menuPuissanceRestante=0;
+	
 	// On creer un curseur
 	Tcurseur cursor;
 	cursor.phrase = (char *)malloc(40);
@@ -655,19 +812,29 @@ int main(){
 	pdebutC = initCentrales();
 	pdebutV = initVilles();
 	
-	
 	while(choix!=27){
+		// On rafraichis la page si on ne demande pas precedemment
+		// D'afficher les puissances restantes ou allouees
 		if(choix!=563 && choix!=564)affichagePrincipal(pdebutC, pdebutV, cursor);
 		cursInput();
 		choix = lireCaract();
 		
 		if(choix==13){}// Entree
-		else if(choix == 559){
+		else if(choix == 559){ // Touche F1
+			/*
+			Pour l'enregistrement, chaque ligne correspond a une structure :
+				- Ligne 1 : Les centrales avec pour schema : codeCentrale,PuissanceMax,etc...
+				- Ligne 2 : Les villes avec pour schema : codePostal,etc...
+				- Ligne 3 : Les lignes elec avec pour schema : codeCentrale,CodePostal,Puissance,etc...
+			Et on rajoute une virgule a chaque fin de ligne, pour le bon fonctionnement du programme
+			*/
+			
 			// Enregistrement des donnees
 			f = fopen("edhess_data.txt", "w");
 
 			pxC = pdebutC->ptsuivant;
 			while(pxC->ptsuivant != NULL){
+				// fprintf pour ecrire dans le fichier
 				if(pxC->ptsuivant->ptsuivant == NULL) fprintf(f, "%d,%d", pxC->codeCentrale, pxC->puissanceMax);
 				else fprintf(f, "%d,%d,", pxC->codeCentrale, pxC->puissanceMax);
 				pxC = pxC->ptsuivant;
@@ -698,7 +865,15 @@ int main(){
 			}
 			fclose(f);
 		}// F1
-		else if(choix == 560){
+		else if(choix == 560){ // TOUCHE F2
+			/*
+			On lit chaque ligne une par une, et en connaissant la forme type lors de l'enregistrement
+			On regroupe les donnees essentielles pour apres ajouter les centrales, villes et lignes
+			
+			L'utilisation de l'operateur modulo a ete tres utile pour facilement diviser 
+			en sous-groupes de 2 ou 3 chaque ligne
+			*/
+			
 			// Utilisation d'un enregistrement
 			if(pdebutC != NULL && pdebutV != NULL){
 				// On oublie les emplacements d'avant pour "tout supprimer" meme si ca conserve en memoire 
@@ -707,44 +882,51 @@ int main(){
 				pdebutV = initVilles();
 				system("cls");
 			}
+			// Initalisation 
 			const char s[2]= ", ";
 			char *token, *token2;
-			int i, ligne=0, comma, j;
+			int i, ligne=0, comma;
 			f = fopen("edhess_data.txt", "r");
+			
 			if(f!=NULL){
 				char line[1024];
 				while(fgets(line, sizeof(line), f) != NULL){
+					/*
+					On calcule le nombre de virgules dans la ligne qu'on etudie
+					Ce que nous sert a parcourir la ligne plus aisement et a mieux
+					troncater les donnees.
+					*/ 
 					comma = countCharDansString(line, ',');
-					if(ligne==0){
+					
+					if(ligne==0){ // Ligne des centrales
 						for(i=0; i<=comma; i++){
 							if(i==0)token = strtok(line,",");
 							else if(i>0) token = strtok(NULL,",");
-							if(i%2 == 0){
+							if(i%2 == 0){ // Recupere le code centrale
 								code = atoi(token);
-							} // Code centrale
-							else {
+							}
+							else if(i%2 == 1){ // Recupere la puissance maximale puis ajoute la centrale
 								puissance = atoi(token);
 								ajouterCentrale(pdebutC, code, puissance);
-							} // Puissance maximale de la centrale
+							}
 						}
-					} else if(ligne == 1){
+					} else if(ligne == 1){ // Ligne des villes
 						for(i=0; i<=comma; i++){
 							if(i==0)token = strtok(line,",");
 							else if(i>0) token = strtok(NULL,",");
 							ajouterVille(pdebutV, atoi(token));
 						}
-					} else if(ligne == 2){
+					} else if(ligne == 2){ // Ligne des lignes electriques
 						for(i=0; i<=comma; i++){
-							j = i%3;
 							if(i==0)token = strtok(line,",");
 							else if(i>0) token = strtok(NULL,",");
-							if(j==0){
+							if(i%3==0){ // Recupere le code centrale
 								code = atoi(token);
 								pxC = centraleViaCode(pdebutC, code);
-							} else if(j==1){
+							} else if(i%3==1){ // Recupere le code postal
 								code = atoi(token);
 								pxV = villeViaCode(pdebutV, code);
-							} else if(j==2){
+							} else if(i%3==2){ // Recupere la puissance de la ligne puis ajoute la ligne
 								puissance = atoi(token);
 								ajouterLigne(pxC, puissance, pxV);
 							}
@@ -756,7 +938,17 @@ int main(){
 			
 		}// F2
 		else if(choix == 561){
-			// Entrer dans le mode centrale
+			/*
+			Entrer dans le mode centrale nous permet de realiser des operations sur celles-ci
+			Il faut donc modifier le menu des fonctions pour le mettre a jour
+			Puis placer le curseur sur les centrales pour choisir la centrale
+			Qui subira les modifications.
+			
+			On peut aussi ne pas prendre en compte le curseur lorsqu'il s'agit d'ajouter une centrale.
+			*/
+			
+			// Afin d'indiquer a l'utilisateur dans quelle liste il est
+			// On mets le titre du cadre selectionne comme un curseur
 			cursor.x = HD_Centrales_x;
 			cursor.y = HD_Centrales_y+2;
 			cursor.phrase = "Liste des centrales :";
@@ -769,7 +961,7 @@ int main(){
 				cursInput();
 				choix = lireCaract();
 				
-				if(choix==559){
+				if(choix==559){ // TOUCHE F1
 					// Ajouter centrale
 					printf("Entrez le code centrale : ");
 					scanf("%d", &code);
@@ -778,20 +970,19 @@ int main(){
 					scanf("%d", &puissance);
 					
 					ajouterCentrale(pdebutC, code, puissance);
-				} else if(choix==560){
-					// Supprimer centrale
+				} else if(choix==560){ // TOUCHE F2
+					// Supprimer centrale a condition qu'elle existe
 					pxC = selectionnerCentrale(pdebutC, pdebutV, cursor);
 					if(pxC != NULL)supprimerCentrale(pdebutC, pxC);
-				} else if(choix==561){
+				} else if(choix==561){ // TOUCHE F3
 					// Modifier puissance maximale centrale
 					pxC = selectionnerCentrale(pdebutC, pdebutV, cursor);
 					cursInput();
 					printf("Entrez la nouvelle puissance : ");
 					scanf("%d", &puissance);
 					modifierPuissance(pxC, puissance);
-				} else if(choix==562){
+				} else if(choix==562){ // TOUCHE F4
 					// Ajouter ligne entre une centrale et une ville
-					// A FAIRE : AFFICHER UNIQUEMENT LES VILLES PAS RELIEES
 					pxC = selectionnerCentrale(pdebutC, pdebutV, cursor);
 					pxV = selectionnerVille(pdebutC, pdebutV, cursor);
 					cursInput();
@@ -799,13 +990,12 @@ int main(){
 					scanf("%d", &puissance);
 				
 					ajouterLigne(pxC, puissance, pxV);
-				} else if(choix==563){ // A TESTER
+				} else if(choix==563){ // TOUCHE F5
 					// Supprimer ligne entre centrale et ville
-					// A FAIRE : AFFICHER UNIQUEMENT LES VILLES RELIEES
 					pxC = selectionnerCentrale(pdebutC, pdebutV, cursor);
 					pxV = selectionnerVille(pdebutC, pdebutV, cursor);	
 					supprimerLigne(pxC, pxV);	
-				} else if(choix==27){ 
+				} else if(choix==27){ // TOUCHE ESCAPE
 					// Quitter le menu centrale et revenir au menu principal
 					choix = 0;
 					cursor.x = -1;
@@ -814,7 +1004,17 @@ int main(){
 			}
 		}// F3
 		else if(choix == 562){
-			// Entrer dans le mode ville
+			/*
+			Entrer dans le mode ville nous permet de realiser des operations sur celles-ci
+			Il faut donc modifier le menu des fonctions pour le mettre a jour
+			Puis placer le curseur sur les villes pour choisir la ville
+			Qui subira les modifications.
+			
+			On peut aussi ne pas prendre en compte le curseur lorsqu'il s'agit d'ajouter une ville.
+			*/
+			
+			// De la meme facon que pour les centrales, on colorie le titre du cadre
+			// Pour indiquer a l'utilisateur dans quel cadre il est.
 			cursor.x = 0;
 			cursor.y = 82;
 			cursor.phrase = "Liste des villes :";
@@ -827,13 +1027,13 @@ int main(){
 				cursInput();
 				choix = lireCaract();
 				
-				if(choix==559){
+				if(choix==559){ // TOUCHE F1
 					// Ajouter une ville
 					printf("Entrez le code postal : ");
 					scanf("%d", &code);
 					
 					ajouterVille(pdebutV, code);	
-				} else if(choix==560){
+				} else if(choix==560){ // TOUCHE F2
 					// Supprimer une ville
 					pxV = selectionnerVille(pdebutC, pdebutV, cursor);
 					if(pxV != NULL){
@@ -844,9 +1044,8 @@ int main(){
 						}
 						supprimerVille(pdebutV, pxV);
 					}
-				} else if(choix==561){ // A TESTER
+				} else if(choix==561){ // TOUCHE F3
 					// Ajouter une ligne entre une ville et une centrale
-					// A FAIRE : AJOUTER UNIQUEMENT LES CENTRALES PAS RELIEES ET DISPONIBLES
 					pxC = selectionnerCentrale(pdebutC, pdebutV, cursor);
 					pxV = selectionnerVille(pdebutC, pdebutV, cursor);
 					cursInput();
@@ -854,13 +1053,12 @@ int main(){
 					scanf("%d", &puissance);
 				
 					ajouterLigne(pxC, puissance, pxV);
-				} else if(choix==562){ // A TESTER
+				} else if(choix==562){ // TOUCHE F4
 					// Supprimer une ligne entre une ville et une centrale
-					// A FAIRE : AJOUTER UNIQUEMENT LES CENTRALES RELIEES
 					pxC = selectionnerCentrale(pdebutC, pdebutV, cursor);
 					pxV = selectionnerVille(pdebutC, pdebutV, cursor);
 					supprimerLigne(pxC, pxV);
-				} else if(choix==27){ 
+				} else if(choix==27){ // TOUCHE ESCAPE
 					// Quitter le menu centrale et revenir au menu principal
 					choix = 0;
 					cursor.x = -1;
@@ -869,7 +1067,12 @@ int main(){
 			}
 		} // F4
 		else if(choix == 563){
-			// Afficher la puissance allouee de chaque centrale
+			/*
+			On intervetit l'affichage entre celui des puissance allouees
+			Et celui normal, en fonction de la l'affichage actuel
+			menuAllouee sert de "bouleen"
+			*/
+
 			if(!menuAllouee){
 				effacerCadreCentrales(pdebutC);
 				afficherPuissanceAlloueeDesCentrales(pdebutC);
@@ -880,17 +1083,24 @@ int main(){
 			menuAllouee = !menuAllouee;
 		} // F5
 		else if(choix == 564){
-			// Afficher les centrales avec encore de la puissance
+			/*
+			On intervetit l'affichage entre celui des puissance restantes
+			Et celui normal, en fonction de la l'affichage actuel
+			menuPuissanceRestante sert de "bouleen"
+			*/
 			if(!menuPuissanceRestante){
 				effacerCadreCentrales(pdebutC);
 				afficherPuissanceRestante(pdebutC);
 			} else if(menuPuissanceRestante){
 				effacerCadreCentrales(pdebutC);
+				effacerCadreInputs();
 				afficheCentrale(pdebutC);
 			}
 			menuPuissanceRestante = !menuPuissanceRestante;
 		} // F6
 	}
+	
+	// On va bas pour pas gener ce qu'on a deja fait.
 	gotoLigCol(50,0);
 	return 1;
 }
